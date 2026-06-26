@@ -1,3 +1,4 @@
+// src/controllers/user.controller.ts
 import { UserService } from "../services/user.service";
 import { HttpException } from "../exceptions/http-exception";
 import { z } from "zod";
@@ -87,6 +88,35 @@ export class UserController {
                 e?.message || "Failed to get user info", 
                 e.status || 500
             );
+        }
+    }
+
+    async sendResetPasswordEmail(req: Request, res: Response) {
+        try {
+            const email = req.body.email;
+            // can be replaced with DTO
+            if (!email) {
+                throw new HttpException(400, "Email is required");
+            }
+            const { token, user } = await userService.sendResetPasswordEmail(email);
+            return ApiResponseHelper.success(res,
+                { token, user }, 200, "Reset password email sent successfully");
+        } catch (error: Error | any) {
+            return ApiResponseHelper.error(res, error.message || "Internal Server Error", error.status || 500);
+        }
+    }
+    async resetPassword(req: Request, res: Response) {
+        try {
+            const token = req.params.token as string;
+            const { newPassword } = req.body;
+            // can be replaced with DTO
+            if (!token || !newPassword) {
+                throw new HttpException(400, "Token and new password are required");
+            }
+            const updatedUser = await userService.resetPassword(token, newPassword);
+            return ApiResponseHelper.success(res, updatedUser, 200, "Password reset successfully");
+        } catch (error: Error | any) {
+            return ApiResponseHelper.error(res, error.message || "Internal Server Error", error.status || 500);
         }
     }
 }
